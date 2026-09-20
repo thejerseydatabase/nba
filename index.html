@@ -232,11 +232,12 @@
 
   <section class="jersey-stats" id="ladder-box">
     <button class="stats-toggle" id="ladder-toggle" aria-expanded="false">
-      <span>Jersey ladder</span><i class="ti ti-chevron-down"></i>
+      <span>Jersey Ladder — All Teams</span><i class="ti ti-chevron-down"></i>
     </button>
     <div class="stats-body" id="ladder-body" hidden>
-      <div class="filters" style="grid-template-columns:200px;margin-bottom:14px;">
+      <div class="filters" style="margin-bottom:14px;">
         <select id="f-ladder-year" aria-label="Jersey ladder season"><option value="">All-time</option></select>
+        <select id="f-ladder-comp" aria-label="Jersey ladder competition"><option value="">All competitions</option></select>
       </div>
       <div class="list-scroll" style="max-height:480px;">
         <table>
@@ -414,6 +415,7 @@ const clearBtn = document.getElementById('clear-filters');
 const ladderToggle = document.getElementById('ladder-toggle');
 const ladderBody = document.getElementById('ladder-body');
 const fLadderYear = document.getElementById('f-ladder-year');
+const fLadderComp = document.getElementById('f-ladder-comp');
 const ladderTbody = document.getElementById('ladder-tbody');
 
 let mode = 'browse';
@@ -568,6 +570,9 @@ function populateFacets(){
 
   fillSelect(fYear, uniqueSorted(MATCHES.filter(facetPredicate('year')), m => m.year, true), 'Any year', seasonLabel);
   fillSelect(fLadderYear, uniqueSorted(MATCHES, m => m.year, true), 'All-time', seasonLabel);
+  // NBA Cup group-stage games are logged with their own comp value - separated out here so
+  // they don't silently pad a jersey's regular-season ladder totals.
+  fillSelect(fLadderComp, uniqueSorted(MATCHES, m => m.comp), 'All competitions');
 
   // When a team is picked, only that team's own side counts - not whatever the opponent wore that game.
   const jerseyScope = MATCHES.filter(facetPredicate('jersey'));
@@ -742,7 +747,8 @@ function renderList(){
 // it exists so the sort order matches the other trackers, not because the NBA itself uses it.
 function renderJerseyLadder(){
   const yr = fLadderYear.value;
-  const rows = MATCHES.filter(m => isPlayed(m) && (!yr || String(m.year) === yr));
+  const comp = fLadderComp.value;
+  const rows = MATCHES.filter(m => isPlayed(m) && (!yr || String(m.year) === yr) && (!comp || m.comp === comp));
   const buckets = {};
   function bump(team, jersey, pf, pa, result){
     const key = team + '\u0001' + (jersey || 'Unknown');
@@ -781,6 +787,8 @@ function renderJerseyLadder(){
 }
 
 function renderJerseyStats(){
+  const prevStatsBody = document.getElementById('stats-body');
+  const statsWasOpen = !!(prevStatsBody && !prevStatsBody.hidden);
   const team = mode === 'browse' ? fTeam.value : null;
   if(!team){ statsEl.hidden = true; statsEl.innerHTML = ''; return; }
 
@@ -816,10 +824,10 @@ function renderJerseyStats(){
   }
 
   statsEl.innerHTML = `
-    <button class="stats-toggle" id="stats-toggle" aria-expanded="false">
+    <button class="stats-toggle" id="stats-toggle" aria-expanded="${statsWasOpen}">
       <span>${team} \u2014 jersey breakdown${fYear.value ? ' (' + fYear.value + ')' : ''}</span><i class="ti ti-chevron-down"></i>
     </button>
-    <div class="stats-body" id="stats-body" hidden>
+    <div class="stats-body" id="stats-body" ${statsWasOpen ? '' : 'hidden'}>
       <table>
         <thead><tr><th>Jersey</th><th>GP</th><th>W</th><th>L</th><th>PF</th><th>PA</th><th>PD</th></tr></thead>
         <tbody>${rows.map(b => rowHtml(b, buckets[b], false)).join('')}${rowHtml('Total', total, true)}</tbody>
@@ -829,6 +837,7 @@ function renderJerseyStats(){
 
   const toggle = document.getElementById('stats-toggle');
   const body = document.getElementById('stats-body');
+  toggle.classList.toggle('open', statsWasOpen);
   toggle.addEventListener('click', () => {
     const open = !body.hidden;
     body.hidden = open;
@@ -844,6 +853,7 @@ ladderToggle.addEventListener('click', () => {
   ladderToggle.classList.toggle('open', !open);
 });
 fLadderYear.addEventListener('change', renderJerseyLadder);
+fLadderComp.addEventListener('change', renderJerseyLadder);
 
 // ---------- init ----------
 populateFacets();

@@ -472,12 +472,10 @@ function updateJerseyBtnLabel(){
   else if(selectedJerseys.size === 1) fJerseyBtn.textContent = [...selectedJerseys][0];
   else fJerseyBtn.textContent = selectedJerseys.size + ' jerseys selected';
 }
-// These five get pulled to the top (in this order) whenever they're
-// actually present in the data - most people filter by one of these far
-// more often than a team's one-off named release, and a comp that
-// doesn't have (say) an Indigenous jersey just never surfaces that
-// option at all, so nothing needs to be sport-specific here.
-const JERSEY_PRIORITY = ['Home','Away','Alternate','Indigenous','Heritage'];
+// NBA jerseys aren't named Home/Away like most other trackers here - Nike's
+// naming since 2017 is Association/Icon/Statement/City/Classic, so those
+// are what actually get pulled to the top (in this order) whenever present.
+const JERSEY_PRIORITY = ['Association','Icon','Statement','City','Classic'];
 function sortJerseyNames(values){
   return [...values].sort((a,b) => {
     const ia = JERSEY_PRIORITY.indexOf(a), ib = JERSEY_PRIORITY.indexOf(b);

@@ -232,7 +232,7 @@
 
   <section class="jersey-stats" id="ladder-box">
     <button class="stats-toggle" id="ladder-toggle" aria-expanded="false">
-      <span>Jersey Ladder — All Teams</span><i class="ti ti-chevron-down"></i>
+      <span id="ladder-heading">Jersey Ladder — All Teams</span><i class="ti ti-chevron-down"></i>
     </button>
     <div class="stats-body" id="ladder-body" hidden>
       <div class="filters" style="margin-bottom:14px;">
@@ -417,6 +417,7 @@ const ladderBody = document.getElementById('ladder-body');
 const fLadderYear = document.getElementById('f-ladder-year');
 const fLadderComp = document.getElementById('f-ladder-comp');
 const ladderTbody = document.getElementById('ladder-tbody');
+const ladderHeading = document.getElementById('ladder-heading');
 
 let mode = 'browse';
 let filtered = [];
@@ -651,6 +652,7 @@ function setMode(m){
   browseFiltersEl.style.display = m === 'browse' ? 'grid' : 'none';
   h2hFiltersEl.style.display = m === 'h2h' ? 'grid' : 'none';
   applyFilters();
+  renderJerseyLadder();
 }
 modeBrowseBtn.addEventListener('click', () => setMode('browse'));
 modeH2hBtn.addEventListener('click', () => setMode('h2h'));
@@ -658,7 +660,7 @@ modeH2hBtn.addEventListener('click', () => setMode('h2h'));
 [fTeam, fYear, fStadium].forEach(el =>
   el.addEventListener('change', () => { populateFacets(); applyFilters(); })
 );
-[fTeamA, fTeamB].forEach(el => el.addEventListener('change', applyFilters));
+[fTeamA, fTeamB].forEach(el => el.addEventListener('change', () => { applyFilters(); renderJerseyLadder(); }));
 
 clearBtn.addEventListener('click', () => {
   [fTeam, fYear, fStadium].forEach(el => el.value = '');
@@ -748,7 +750,14 @@ function renderList(){
 function renderJerseyLadder(){
   const yr = fLadderYear.value;
   const comp = fLadderComp.value;
-  const rows = MATCHES.filter(m => isPlayed(m) && (!yr || String(m.year) === yr) && (!comp || m.comp === comp));
+  let rows = MATCHES.filter(m => isPlayed(m) && (!yr || String(m.year) === yr) && (!comp || m.comp === comp));
+  if(mode === 'h2h'){
+    const a = fTeamA.value, b = fTeamB.value;
+    rows = rows.filter(m => (m.home === a && m.away === b) || (m.home === b && m.away === a));
+    ladderHeading.textContent = 'Jersey Ladder \u2014 ' + a + ' vs ' + b;
+  } else {
+    ladderHeading.textContent = 'Jersey Ladder \u2014 All Teams';
+  }
   const buckets = {};
   function bump(team, jersey, pf, pa, result){
     const key = team + '\u0001' + (jersey || 'Unknown');
